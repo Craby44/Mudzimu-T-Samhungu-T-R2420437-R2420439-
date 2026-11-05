@@ -1,0 +1,90 @@
+
+=== Part 2: constructors reject bad input ===
+  rejected empty name: name must not be empty
+  rejected id 0: id must be positive
+
+=== Part 3: one loop, no type checks (P = 5) ===
+  Doctor                 fee 40
+  Nurse                  fee 12
+  Pharmacist             fee 5
+  Doctor and Lecturer    fee 40
+  Lab Technician         fee 7
+
+=== Part 5: diamond, Person constructed once ===
+  Person constructor ran 1 time(s)
+  MRO: MedicalLecturer -> Doctor -> Staff -> Lecturer -> Person
+  plain Lecturer teaches Ethics
+
+=== Parts 4 and 6: clinic session (log opened once, closed once) ===
+[log] opened
+[log] REGISTERED Doctor Dr Moyo #1
+[log] REGISTERED Nurse Nurse Ncube #2
+[log] REGISTERED Pharmacist Dube #3
+[log] REGISTERED Doctor and Lecturer Prof Sibanda #4
+[log] REGISTERED Lab Technician Tafara #5
+[log] REGISTERED Patient Alice #101
+[log] REGISTERED Patient Bob #102
+[log] REGISTERED Patient Carol #103
+[log] REGISTERED Patient Dan #104
+[log] FAILED register patient #101: id 101 already in use
+  refused: duplicate id 101 -> id 101 already in use
+[log] BOOKED #1 Alice with Doctor Dr Moyo at hour 20 [PENDING] fee 40
+  ok: Alice-Moyo@20 (#1)
+[log] BOOKED #2 Bob with Nurse Nurse Ncube at hour 22 [PENDING] fee 12
+  ok: Bob-Ncube@22 (#2)
+[log] FAILED book patient #102 with staff #1 at hour 20: staff already booked at that hour
+  refused: Bob-Moyo@20 (staff clash) -> staff already booked at that hour
+[log] FAILED book patient #101 with staff #2 at hour 20: patient already booked at that hour
+  refused: Alice-Ncube@20 (patient clash) -> patient already booked at that hour
+  -- twist: emergency --
+[log] EMERGENCY on for Carol
+[log] BUMPED #1 (Alice) for emergency patient Carol
+[log] BOOKED #3 Carol with Doctor Dr Moyo at hour 20 [PENDING] fee 40
+  ok: Carol (emergency)-Moyo@20 bumps pending #1
+[log] CONFIRMED #3
+  ok: confirm #3
+[log] EMERGENCY on for Dan
+[log] FAILED book patient #104 with staff #1 at hour 20: cannot bump a confirmed appointment
+  refused: Dan (emergency)-Moyo@20 vs confirmed -> cannot bump a confirmed appointment
+[log] BOOKED #4 Alice with Doctor and Lecturer Prof Sibanda at hour 30 [PENDING] fee 40
+  ok: Alice-MedicalLecturer@30 (#4)
+[log] BOOKED #5 Dan with Lab Technician Tafara at hour 31 [PENDING] fee 7
+  ok: Dan-LabTechnician@31 (#5, new subclass)
+  -- state rules --
+  DELIBERATE FAILURE: cancel confirmed #3 at hour 19 (1 h before start)
+[log] FAILED cancel #3: too late
+  refused: cancel #3 -> too late
+[log] FAILED cancel #3: already started
+  refused: cancel #3 after it started -> already started
+[log] CANCELLED #2 (patient request)
+  ok: cancel pending #2
+[log] FAILED cancel #2: already cancelled
+  refused: cancel #2 again -> already cancelled
+[log] FAILED confirm #2: already cancelled
+  refused: confirm cancelled #2 (cannot return) -> already cancelled
+
+  Final appointments:
+    #1 Alice with Doctor Dr Moyo at hour 20 [CANCELLED] bumped
+    #2 Bob with Nurse Nurse Ncube at hour 22 [CANCELLED] patient request
+    #3 Carol with Doctor Dr Moyo at hour 20 [CONFIRMED] 
+    #4 Alice with Doctor and Lecturer Prof Sibanda at hour 30 [PENDING] 
+    #5 Dan with Lab Technician Tafara at hour 31 [PENDING] 
+
+  Week schedule (active appointments only):
+    Day 1 20:00  Doctor               Dr Moyo       <- Carol [CONFIRMED]
+    Day 2 06:00  Doctor and Lecturer  Prof Sibanda  <- Alice [PENDING]
+    Day 2 07:00  Lab Technician       Tafara        <- Dan [PENDING]
+[log] closed
+
+=== Part 4: an error mid-operation still closes the log ===
+[log] opened
+[log] REGISTERED Doctor Dr Crash #1
+[log] closed
+  caught: simulated crash
+
+=== D5: the log itself fails (unwritable path) ===
+[log] WARNING: cannot open /no_such_dir/clinic.log: [Errno 2] No such file or directory: '/no_such_dir/clinic.log'; logging to memory only
+[log] opened
+[log] REGISTERED Doctor Dr Memory #1
+  clinic kept working
+[log] closed
